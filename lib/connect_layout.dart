@@ -51,7 +51,19 @@ class _ConnectState extends State<Connect> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: 25,),
+              SizedBox(height: 15,),
+              Container(
+                width: MediaQuery.of(context).size.height * 0.2,
+                height: MediaQuery.of(context).size.width * 0.25,
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: AssetImage(
+                            "assets/cctv_app_icon.webp"
+                        )
+                    )
+                ),
+              ),
+              SizedBox(height: 15,),
               Container(
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: TextField(
@@ -160,6 +172,7 @@ class _ConnectState extends State<Connect> {
               SizedBox(height: 30,),
               loadingWidget,
               errorWidget,
+
             ],
           ),
         ),

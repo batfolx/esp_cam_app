@@ -2,7 +2,7 @@
     package="com.example.espcamapp">
 
    <application
-        android:label="espcamapp"
+        android:label="ESP CCTV"
        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
 
