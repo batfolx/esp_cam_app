@@ -3,6 +3,7 @@ import 'package:espcamapp/networking.dart';
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+
 class CCTV extends StatefulWidget {
   @override
   _CCTVState createState() => _CCTVState();
@@ -14,7 +15,6 @@ class _CCTVState extends State<CCTV> {
   Timer timer;
   CCTVArgs args;
   int currCamera = 1;
-  IO.Socket websocket;
 
   @override
   void initState() {
@@ -27,12 +27,13 @@ class _CCTVState extends State<CCTV> {
     if (!started) {
       started = true;
       args = ModalRoute.of(context).settings.arguments;
+      disconnectWebSocket();
       connectWebSocket();
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Watching camera number $currCamera"),
+        title: Text("Camera $currCamera"),
         actions: [
           IconButton(
               icon: Icon(Icons.add),
@@ -105,7 +106,13 @@ class _CCTVState extends State<CCTV> {
 
                   }
                 }
-              })
+              }),
+          IconButton(icon: Icon(Icons.refresh), onPressed: () {
+            if (!websocket.connected)
+            connectWebSocket();
+            else
+              print("Websocket is already connected");
+          })
         ],
       ),
       body: Container(
@@ -122,20 +129,20 @@ class _CCTVState extends State<CCTV> {
   void dispose() {
     super.dispose();
     timer.cancel();
-    websocket.disconnect();
-    websocket = null;
+    disconnectWebSocket();
+
   }
 
   void connectWebSocket() {
     print("Connecting to ${args.url()}");
     // connect the websocket
-    if (websocket == null) {
+    if (websocket == null || !websocket.connected) {
 
       // connect to the URL given in the args
       websocket = IO.io(args.url(), <String, dynamic>{
         'transports': ['websocket'],
-        'autoConnect': true,
-      });
+        'autoConnect': false,
+      }).connect();
       // send a connection to the server
       websocket.on("connect", (data) => {
         print("Connected to websocket! ${args.url()}"),
@@ -146,22 +153,46 @@ class _CCTVState extends State<CCTV> {
 
       websocket.on("data", (data)  {
         //print("GOT DATA!");
-        setState(() {
-          camImage = Image(
-            gaplessPlayback: true,
-            image: MemoryImage(data['data']),
-          );
-        });
+        if (mounted) {
+          setState(() {
+            camImage = Image(
+              gaplessPlayback: true,
+              image: MemoryImage(data['data']),
+            );
+          });
+        } else {
+
+        }
+
       });
 
       timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
-        if (!mounted) return;
-        websocket.emit("camera", {
-          'cam': currCamera.toString()
-        });
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        if (mounted) {
+            websocket.emit("camera", {
+              'cam': currCamera.toString()
+            });
+          } else {
+          disconnectWebSocket();
+        }
+
+
       });
     }
 
+  }
+
+  void disconnectWebSocket() {
+    if (websocket != null) {
+      websocket.emit("disconnect");
+      websocket.off("data");
+      websocket.disconnect();
+    }
+
+    websocket = null;
   }
 }
 
