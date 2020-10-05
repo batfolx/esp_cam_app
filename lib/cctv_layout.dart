@@ -28,26 +28,6 @@ class _CCTVState extends State<CCTV> {
       started = true;
       args = ModalRoute.of(context).settings.arguments;
       connectWebSocket();
-
-
-      // start a timer with 2 seconds to refresh the picture from the
-      // server, should probably implement websocket here eventually
-      /*timer = Timer.periodic(Duration(seconds: 2), (timer) async {
-        var response = await getData(args.url() + "/pic?name=$currCamera");
-        String error = response['error'];
-        if (error == '') {
-          if (mounted) {
-            setState(() {
-              camImage = Image(
-                gaplessPlayback: true,
-                image: MemoryImage(response['data']),
-              );
-            });
-          }
-        } else {
-          // do nothing for now
-        }
-      }); */
     }
 
     return Scaffold(
@@ -117,6 +97,9 @@ class _CCTVState extends State<CCTV> {
                   // try to parse result into a number
                   try {
                     currCamera = int.parse(result);
+                    setState(() {
+                      camImage = getLoadingWidget();
+                    });
                   } catch (e) {
                     // do nothing for now
 
@@ -128,9 +111,8 @@ class _CCTVState extends State<CCTV> {
       body: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        child: SingleChildScrollView(
-          child: Column(children: [camImage]),
-        ),
+        color: Colors.black,
+        child: camImage
       ),
     );
   }
