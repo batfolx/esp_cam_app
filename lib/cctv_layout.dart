@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:espcamapp/networking.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
+import 'package:image_picker/image_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 
 class CCTV extends StatefulWidget {
   @override
@@ -15,6 +20,8 @@ class _CCTVState extends State<CCTV> {
   Timer timer;
   CCTVArgs args;
   int currCamera = 1;
+
+  final picker = ImagePicker();
 
   @override
   void initState() {
@@ -112,6 +119,44 @@ class _CCTVState extends State<CCTV> {
             connectWebSocket();
             else
               print("Websocket is already connected");
+          }),
+          IconButton(icon: Icon(Icons.save_alt), onPressed: () async {
+
+            try {
+              // get the bytes of the current memory image
+              Uint8List bytes = ((camImage as Image).image as MemoryImage).bytes;
+
+              // get the temporary directory be we save this to camera
+              Directory tempDir = await getTemporaryDirectory();
+
+              // get the temp path
+              String tempPath = tempDir.path;
+
+              // create a temporary file
+              File f = new File("$tempPath/temp.jpg");
+
+              // write the bytes sync
+              f.writeAsBytesSync(bytes);
+
+              // save the image to the
+              bool success = await GallerySaver.saveImage(f.path);
+
+              // report success or failure
+              if (success) {
+                Fluttertoast.showToast(msg: "Saved image!");
+              } else {
+                Fluttertoast.showToast(msg: "Failed to save image.");
+              }
+
+              // then delete the temp file to save memory
+              await f.delete();
+            } catch (e) {
+              Fluttertoast.showToast(msg: "Something went wrong in saving image. Try again in a little.");
+            }
+
+
+
+
           })
         ],
       ),
