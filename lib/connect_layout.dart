@@ -23,8 +23,8 @@ class _ConnectState extends State<Connect> {
     addr = new TextEditingController();
     port = new TextEditingController();
     proto.text = "http";
-    port.text = "20000";
-    addr.text = "192.168.1.8";
+    port.text = "3000";
+    addr.text = "192.168.1.6";
     loadingWidget = Container();
     errorWidget = Container();
   }

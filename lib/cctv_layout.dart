@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:collection';
-
 import 'package:espcamapp/networking.dart';
 import 'package:flutter/material.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class CCTV extends StatefulWidget {
   @override
@@ -14,13 +13,13 @@ class _CCTVState extends State<CCTV> {
   Widget camImage;
   Timer timer;
   CCTVArgs args;
-  int currCamera = 2;
-
+  int currCamera = 1;
+  IO.Socket websocket;
 
   @override
   void initState() {
     super.initState();
-    camImage = Container();
+    camImage = getLoadingWidget();
   }
 
   @override
@@ -28,10 +27,12 @@ class _CCTVState extends State<CCTV> {
     if (!started) {
       started = true;
       args = ModalRoute.of(context).settings.arguments;
+      connectWebSocket();
+
 
       // start a timer with 2 seconds to refresh the picture from the
       // server, should probably implement websocket here eventually
-      timer = Timer.periodic(Duration(seconds: 2), (timer) async {
+      /*timer = Timer.periodic(Duration(seconds: 2), (timer) async {
         var response = await getData(args.url() + "/pic?name=$currCamera");
         String error = response['error'];
         if (error == '') {
@@ -46,7 +47,7 @@ class _CCTVState extends State<CCTV> {
         } else {
           // do nothing for now
         }
-      });
+      }); */
     }
 
     return Scaffold(
@@ -139,9 +140,47 @@ class _CCTVState extends State<CCTV> {
   void dispose() {
     super.dispose();
     timer.cancel();
+    websocket.disconnect();
+    websocket = null;
   }
 
-  void changeCamera() {}
+  void connectWebSocket() {
+    print("Connecting to ${args.url()}");
+    // connect the websocket
+    if (websocket == null) {
+
+      // connect to the URL given in the args
+      websocket = IO.io(args.url(), <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': true,
+      });
+      // send a connection to the server
+      websocket.on("connect", (data) => {
+        print("Connected to websocket! ${args.url()}"),
+        websocket.emit("camera", {
+          'cam': currCamera.toString()
+        })
+      });
+
+      websocket.on("data", (data)  {
+        //print("GOT DATA!");
+        setState(() {
+          camImage = Image(
+            gaplessPlayback: true,
+            image: MemoryImage(data['data']),
+          );
+        });
+      });
+
+      timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+        if (!mounted) return;
+        websocket.emit("camera", {
+          'cam': currCamera.toString()
+        });
+      });
+    }
+
+  }
 }
 
 class CCTVArgs {
