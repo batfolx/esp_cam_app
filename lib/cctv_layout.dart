@@ -192,7 +192,9 @@ class _CCTVState extends State<CCTV> {
       websocket.on("connect", (data) => {
         print("Connected to websocket! ${args.url()}"),
         websocket.emit("camera", {
-          'cam': currCamera.toString()
+          'cam': currCamera.toString(),
+          'login': args.login,
+          'password': args.password
         })
       });
 
@@ -218,7 +220,9 @@ class _CCTVState extends State<CCTV> {
         }
         if (mounted) {
             websocket.emit("camera", {
-              'cam': currCamera.toString()
+              'cam': currCamera.toString(),
+              'login': args.login,
+              'password': args.password
             });
           } else {
           disconnectWebSocket();
@@ -245,8 +249,10 @@ class CCTVArgs {
   String proto;
   String addr;
   String port;
+  String login;
+  String password;
 
-  CCTVArgs(this.proto, this.addr, this.port);
+  CCTVArgs(this.proto, this.addr, this.port, this.login, this.password);
 
   String url() {
     return proto + "://" + addr + ":" + port;
