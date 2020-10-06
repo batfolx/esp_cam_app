@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:espcamapp/cctv_layout.dart';
 import 'package:espcamapp/networking.dart';
+import 'package:espcamapp/preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class Connect extends StatefulWidget {
   @override
@@ -21,6 +23,8 @@ class _ConnectState extends State<Connect> {
   String passwordErr;
   Widget loadingWidget;
   Widget errorWidget;
+  bool started = false;
+
 
   @override
   void initState() {
@@ -33,8 +37,8 @@ class _ConnectState extends State<Connect> {
     proto.text = "http";
     port.text = "20000";
     addr.text = "192.168.1.8";
-    login.text = '0';
-    password.text = '0';
+    login.text = 'victor';
+    password.text = 'batfolx';
     loadingWidget = Container();
     errorWidget = Container();
   }
@@ -49,12 +53,51 @@ class _ConnectState extends State<Connect> {
     password.dispose();
   }
 
+  /// Get the saved preferences (proto, addr) so
+  /// user doesn't have to type it every time they go into
+  /// app
+  void getPreferencesInfo() async {
+
+    var preferences = await getPreferences();
+    print(preferences);
+
+    setState(() {
+      proto.text = preferences['proto'];
+      addr.text = preferences['addr'];
+      port.text = preferences['port'];
+      login.text = preferences['login'];
+      password.text = preferences['password'];
+    });
+
+  }
+
+  /// saves all the stuff to a file
+  Future<dynamic> savePreferencesInfo() async {
+
+    await savePreferencesToFile(
+        proto.text.trim(), addr.text.trim(), port.text.trim(),
+        login.text, password.text);
+
+    Fluttertoast.showToast(msg: "Saved address & login info");
+
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
+
+    if (!started) {
+      started = true;
+      getPreferencesInfo();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text("ESP-32 SpyCam"),
+        actions: [
+          IconButton(icon: Icon(Icons.save_alt), onPressed: savePreferencesInfo)
+        ],
       ),
       body: Container(
         height: MediaQuery.of(context).size.height,
@@ -70,6 +113,7 @@ class _ConnectState extends State<Connect> {
                     image: DecorationImage(
                         image: AssetImage(
                             "assets/cctv_app_icon.webp"
+                          //"assets/cctv_icon.png"
                         )
                     )
                 ),

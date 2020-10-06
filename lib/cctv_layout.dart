@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:espcamapp/networking.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,8 @@ class _CCTVState extends State<CCTV> {
   Timer timer;
   CCTVArgs args;
   int currCamera = 1;
+  Uint8List prevImg = Uint8List(1);
+  DateTime date = DateTime.now();
 
   final picker = ImagePicker();
 
@@ -201,11 +204,37 @@ class _CCTVState extends State<CCTV> {
       websocket.on("data", (data)  {
         //print("GOT DATA!");
         if (mounted) {
+          Uint8List imgBytes = data['data'];
+          Widget info;
+          if (prevImg.length != imgBytes.length) {
+            prevImg = imgBytes;
+            date = DateTime.now();
+          }
+          info = Text("Last updated: ${DateFormat('dd-MM-yyyy hh:mm:ss a').format(date)}", style: TextStyle(
+              color: Colors.white,
+              fontSize: 16
+          ));
+
           setState(() {
-            camImage = Image(
-              gaplessPlayback: true,
-              image: MemoryImage(data['data']),
+            camImage = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Current time: ${DateFormat('dd-MM-yyyy hh:mm:ss a').format(DateTime.now())}",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14
+                  ),),
+                SizedBox(height: 7.5,),
+                info,
+                SizedBox(height: 5,),
+                Image(
+                  gaplessPlayback: true,
+                  image: MemoryImage(imgBytes),
+                )
+              ],
             );
+
           });
         } else {
 
@@ -213,7 +242,7 @@ class _CCTVState extends State<CCTV> {
 
       });
 
-      timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+      timer = Timer.periodic(Duration(seconds: 1), (timer) {
         if (!mounted) {
           timer.cancel();
           return;
