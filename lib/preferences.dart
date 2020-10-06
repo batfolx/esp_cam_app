@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 const FILENAME = "prefs.json";
 
 Future<dynamic> savePreferencesToFile(String proto,
-    String addr, String port, String login, String password) async {
+    String addr, String port, String login, String password, String camera) async {
 
   // get the directory
   Directory dir = await getApplicationDocumentsDirectory();
@@ -19,7 +19,8 @@ Future<dynamic> savePreferencesToFile(String proto,
     "addr": addr,
     "port": port,
     "login": login,
-    "password": password
+    "password": password,
+    "camera": camera
   };
 
   File f = new File("$path/$FILENAME");
@@ -48,7 +49,8 @@ Future<dynamic> getPreferences() async {
       "addr": "192.168.1.8",
       "port": "20000",
       "login": "victor",
-      "password": "batfolx"
+      "password": "batfolx",
+      "camera": "1"
     };
 
   } else {
@@ -61,7 +63,8 @@ Future<dynamic> getPreferences() async {
         "addr": "192.168.1.8",
         "port": "20000",
         "login": "victor",
-        "password": "batfolx"
+        "password": "batfolx",
+        "camera": "1"
       };
     }
   }

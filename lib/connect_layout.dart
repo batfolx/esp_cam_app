@@ -19,6 +19,7 @@ class _ConnectState extends State<Connect> {
   TextEditingController port;
   TextEditingController login;
   TextEditingController password;
+  TextEditingController camera;
   String loginErr;
   String passwordErr;
   Widget loadingWidget;
@@ -34,6 +35,7 @@ class _ConnectState extends State<Connect> {
     port = new TextEditingController();
     login = new TextEditingController();
     password = new TextEditingController();
+    camera = new TextEditingController();
     proto.text = "http";
     port.text = "20000";
     addr.text = "192.168.1.8";
@@ -51,6 +53,7 @@ class _ConnectState extends State<Connect> {
     port.dispose();
     login.dispose();
     password.dispose();
+    camera.dispose();
   }
 
   /// Get the saved preferences (proto, addr) so
@@ -67,6 +70,7 @@ class _ConnectState extends State<Connect> {
       port.text = preferences['port'];
       login.text = preferences['login'];
       password.text = preferences['password'];
+      camera.text = preferences['camera'];
     });
 
   }
@@ -76,7 +80,7 @@ class _ConnectState extends State<Connect> {
 
     await savePreferencesToFile(
         proto.text.trim(), addr.text.trim(), port.text.trim(),
-        login.text, password.text);
+        login.text, password.text, camera.text.trim());
 
     Fluttertoast.showToast(msg: "Saved address & login info");
 
@@ -215,6 +219,23 @@ class _ConnectState extends State<Connect> {
                   ],
                 ),
               ),
+              SizedBox(height: 30,),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: TextField(
+                  controller: camera,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                              color: Colors.black
+                          )
+                      ),
+                      hintText: "Camera number",
+                      labelText: "Camera number"
+                  ),
+                ),
+              ),
               SizedBox(height: 30),
               Container(
                 width: MediaQuery.of(context).size.width - 30,
@@ -250,7 +271,7 @@ class _ConnectState extends State<Connect> {
                         setState(() {
                           loadingWidget = Container();
                         });
-                        CCTVArgs args = new CCTVArgs(proto.text, addr.text, port.text, login.text, password.text);
+                        CCTVArgs args = new CCTVArgs(proto.text, addr.text, port.text, login.text, password.text, camera.text);
                         await Navigator.pushNamed(context, "CCTVState", arguments: args);
 
                       } else {
