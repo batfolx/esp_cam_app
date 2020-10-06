@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:espcamapp/networking.dart';
@@ -204,10 +205,12 @@ class _CCTVState extends State<CCTV> {
       websocket.on("data", (data)  {
         //print("GOT DATA!");
         if (mounted) {
-          Uint8List imgBytes = data['data'];
+          if (data['data'] == 0) return;
+          String imgBytes = new String.fromCharCodes(data['data']);
+          Uint8List decoded = base64Decode(imgBytes);
           Widget info;
-          if (prevImg.length != imgBytes.length) {
-            prevImg = imgBytes;
+          if (prevImg.length != decoded.length) {
+            prevImg = decoded;
             date = DateTime.now();
           }
           info = Text("Last updated: ${DateFormat('dd-MM-yyyy hh:mm:ss a').format(date)}", style: TextStyle(
@@ -230,7 +233,7 @@ class _CCTVState extends State<CCTV> {
                 SizedBox(height: 5,),
                 Image(
                   gaplessPlayback: true,
-                  image: MemoryImage(imgBytes),
+                  image: MemoryImage(decoded),
                 )
               ],
             );
