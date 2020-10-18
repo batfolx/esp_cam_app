@@ -258,7 +258,7 @@ class _CCTVState extends State<CCTV> {
         }
       });
 
-      timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      timer = Timer.periodic(Duration(milliseconds: 250), (timer) {
         if (!mounted) {
           timer.cancel();
           return;
