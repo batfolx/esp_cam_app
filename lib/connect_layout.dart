@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:espcamapp/cctv_layout.dart';
@@ -258,47 +259,35 @@ class _ConnectState extends State<Connect> {
                       });
 
 
-                      String url = proto.text + "://" + addr.text + ":" + port.text + "/auth";
-                      Map<String, String> headers = {
-                        "login": login.text,
-                        "password": password.text
+                      String url = proto.text + "://" + addr.text + ":" + port.text + "/api/auth";
+                      Map<String, String> body = {
+                        "user": login.text,
+                        "pass": password.text
                       };
-                      var response  = await getDataHeaders(url, headers);
+                      var response  = await getSessionId(url, body);
                       String error = response['error'];
                       print(error);
-
                       if (error == '') {
                         setState(() {
                           loadingWidget = Container();
                         });
+                        sessionId = response["sessionId"];
+                        print("Session ID: $sessionId");
                         CCTVArgs args = new CCTVArgs(proto.text, addr.text, port.text, login.text, password.text, camera.text);
                         await Navigator.pushNamed(context, "CCTVState", arguments: args);
 
                       } else {
 
-                        if (error == 'invalid') {
-                          setState(() {
-                            loadingWidget = Container();
-                            errorWidget = Text("Wrong username & password. ");
-                          });
+                        setState(() {
+                          loadingWidget = Container();
+                          errorWidget = Text("Failed to connect to " + url);
+                        });
 
-                          await Future.delayed(Duration(seconds: 2));
-                          setState(() {
-                            loadingWidget = Container();
-                            errorWidget = Container();
-                          });
-                        } else {
-                          setState(() {
-                            loadingWidget = Container();
-                            errorWidget = Text("Failed to connect to " + url);
-                          });
-
-                          await Future.delayed(Duration(seconds: 2));
-                          setState(() {
-                            loadingWidget = Container();
-                            errorWidget = Container();
-                          });
-                        }
+                        await Future.delayed(Duration(seconds: 2));
+                        setState(() {
+                          loadingWidget = Container();
+                          errorWidget = Container();
+                        });
 
                       }
 

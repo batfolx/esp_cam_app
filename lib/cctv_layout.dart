@@ -6,10 +6,10 @@ import 'package:espcamapp/networking.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:web_socket_channel/io.dart';
 
 class CCTV extends StatefulWidget {
   @override
@@ -17,33 +17,24 @@ class CCTV extends StatefulWidget {
 }
 
 class _CCTVState extends State<CCTV> {
-  bool started = false;
-  Widget camImage;
-  Timer timer;
+
   CCTVArgs args;
   int currCamera = 1;
-  Uint8List prevImg = Uint8List(1);
+  IOWebSocketChannel channel;
   DateTime date = DateTime.now();
-
   final picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    camImage = getLoadingWidget();
+    channel = IOWebSocketChannel.connect("ws://192.168.1.158:9006/api/stream", headers: {
+      'cookie': sessionId
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!started) {
-      started = true;
-      args = ModalRoute.of(context).settings.arguments;
-      setCameraNumber();
-      disconnectWebSocket();
-      connectWebSocket();
-
-    }
-
+    args = ModalRoute.of(context).settings.arguments as CCTVArgs;
     return Scaffold(
       appBar: AppBar(
         title: Text("Camera $currCamera"),
@@ -107,7 +98,6 @@ class _CCTVState extends State<CCTV> {
                   try {
                     currCamera = int.parse(result);
                     setState(() {
-                      camImage = getLoadingWidget();
                     });
                   } catch (e) {
                     // do nothing for now
@@ -118,15 +108,12 @@ class _CCTVState extends State<CCTV> {
           IconButton(
               icon: Icon(Icons.refresh),
               onPressed: () {
-                if (!websocket.connected)
-                  connectWebSocket();
-                else
-                  print("Websocket is already connected");
+
               }),
           IconButton(
               icon: Icon(Icons.save_alt),
               onPressed: () async {
-                try {
+                try { /*
                   // get the bytes of the current memory image
                   Uint8List bytes =
                       ((camImage as Image).image as MemoryImage).bytes;
@@ -154,7 +141,7 @@ class _CCTVState extends State<CCTV> {
                   }
 
                   // then delete the temp file to save memory
-                  await f.delete();
+                  await f.delete(); */
                 } catch (e) {
                   Fluttertoast.showToast(
                       msg:
@@ -167,15 +154,21 @@ class _CCTVState extends State<CCTV> {
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           color: Colors.black,
-          child: camImage),
+          child: StreamBuilder(
+            stream: this.channel.stream,
+            builder: (context, snapshot) {
+              return snapshot.hasData ? Image.memory(snapshot.data, gaplessPlayback: true,) : getLoadingWidget();
+            },
+          )),
     );
   }
 
   @override
   void dispose() {
+
+    if (channel != null) channel.sink.close();
     super.dispose();
-    timer.cancel();
-    disconnectWebSocket();
+
   }
 
   void setCameraNumber() {
@@ -186,105 +179,8 @@ class _CCTVState extends State<CCTV> {
     }
   }
 
-  void connectWebSocket() {
-    print("Connecting to ${args.url()}");
-    // connect the websocket
-    if (websocket == null || !websocket.connected) {
-      // connect to the URL given in the args
-      websocket = IO.io(args.url(), <String, dynamic>{
-        'transports': ['websocket'],
-        'autoConnect': false,
-      }).connect();
-      // send a connection to the server
-      websocket.on(
-          "connect",
-          (data) => {
-                print("Connected to websocket! ${args.url()}"),
-                websocket.emit("camera", {
-                  'cam': currCamera.toString(),
-                  'login': args.login,
-                  'password': args.password
-                })
-              });
 
-      websocket.on("data", (data) {
-        if (mounted) {
-          // means no data was returned
-          if (data['data'] == 0) {
-            setState(() {
-              camImage = Center(
-                child: Text(
-                  "Camera number $currCamera is offline.",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              );
-            });
-            return;
-          }
-          String imgBytes = new String.fromCharCodes(data['data']);
-          Uint8List decoded = base64Decode(imgBytes);
-          Widget info;
-          if (prevImg.length != decoded.length) {
-            prevImg = decoded;
-            date = DateTime.now();
-          }
-          info = Text(
-              "Last updated: ${DateFormat('dd-MM-yyyy hh:mm:ss a').format(date)}",
-              style: TextStyle(color: Colors.white, fontSize: 16));
 
-          setState(() {
-            camImage = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Current time: ${DateFormat('dd-MM-yyyy hh:mm:ss a').format(DateTime.now())}",
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-                SizedBox(
-                  height: 7.5,
-                ),
-                info,
-                SizedBox(
-                  height: 5,
-                ),
-                Image(
-                  gaplessPlayback: true,
-                  image: MemoryImage(decoded),
-                )
-              ],
-            );
-          });
-        }
-      });
-
-      timer = Timer.periodic(Duration(milliseconds: 250), (timer) {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-        if (mounted) {
-          websocket.emit("camera", {
-            'cam': currCamera.toString(),
-            'login': args.login,
-            'password': args.password
-          });
-        } else {
-          disconnectWebSocket();
-        }
-      });
-    }
-  }
-
-  void disconnectWebSocket() {
-    if (websocket != null) {
-      websocket.emit("disconnect");
-      websocket.off("data");
-      websocket.disconnect();
-    }
-
-    websocket = null;
-  }
 }
 
 class CCTVArgs {
