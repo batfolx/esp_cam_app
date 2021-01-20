@@ -27,14 +27,19 @@ class _CCTVState extends State<CCTV> {
   @override
   void initState() {
     super.initState();
-    channel = IOWebSocketChannel.connect("ws://192.168.1.158:9006/api/stream", headers: {
-      'cookie': sessionId
-    });
+
   }
 
   @override
   Widget build(BuildContext context) {
-    args = ModalRoute.of(context).settings.arguments as CCTVArgs;
+    if (args == null) {
+      args = ModalRoute.of(context).settings.arguments as CCTVArgs;
+      channel = IOWebSocketChannel.connect("ws://${args.addr}:${args.port}/api/stream", headers: {
+        'cookie': sessionId,
+        'cameraNumber': args.camnum
+      });
+      currCamera = int.parse(args.camnum);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("Camera $currCamera"),
@@ -97,6 +102,12 @@ class _CCTVState extends State<CCTV> {
                   // try to parse result into a number
                   try {
                     currCamera = int.parse(result);
+                    var resp = await getDataHeaders("${args.url()}/api/stream/change", {
+                      "cookie": sessionId,
+                      "cameraNumber": currCamera.toString()
+                    } as Map<String, String>);
+
+                    print(resp);
                     setState(() {
                     });
                   } catch (e) {

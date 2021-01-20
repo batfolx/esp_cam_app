@@ -262,7 +262,8 @@ class _ConnectState extends State<Connect> {
                       String url = proto.text + "://" + addr.text + ":" + port.text + "/api/auth";
                       Map<String, String> body = {
                         "user": login.text,
-                        "pass": password.text
+                        "pass": password.text,
+                        "cameraNumber": "1",
                       };
                       var response  = await getSessionId(url, body);
                       String error = response['error'];
