@@ -34,7 +34,7 @@ class _CCTVState extends State<CCTV> {
   Widget build(BuildContext context) {
     if (args == null) {
       args = ModalRoute.of(context).settings.arguments as CCTVArgs;
-      channel = IOWebSocketChannel.connect("ws://${args.addr}:${args.port}/api/stream", headers: {
+      channel = IOWebSocketChannel.connect("ws://${args.addr}:${args.port}/api/stream/user", headers: {
         'cookie': sessionId,
         'cameraNumber': args.camnum
       });
@@ -117,9 +117,20 @@ class _CCTVState extends State<CCTV> {
                 }
               }),
           IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: () {
-
+              icon: Icon(Icons.cancel),
+              onPressed: () async {
+                var resp = await getDataHeaders("${args.url()}/api/stream/off", {
+                  "cookie": sessionId,
+                  "cameraNumber": currCamera.toString()
+                } as Map<String, String>);
+              }),
+          IconButton(
+              icon: Icon(Icons.not_started_outlined),
+              onPressed: () async {
+                var resp = await getDataHeaders("${args.url()}/api/stream/on", {
+                  "cookie": sessionId,
+                  "cameraNumber": currCamera.toString()
+                } as Map<String, String>);
               }),
           IconButton(
               icon: Icon(Icons.save_alt),
