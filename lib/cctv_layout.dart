@@ -117,6 +117,22 @@ class _CCTVState extends State<CCTV> {
                 }
               }),
           IconButton(
+              icon: Icon(Icons.face),
+              onPressed: () async {
+                var resp = await getDataHeaders("${args.url()}/api/stream/facialDetect/on", {
+                  "cookie": sessionId,
+                  "cameraNumber": currCamera.toString()
+                } as Map<String, String>);
+              }),
+          IconButton(
+              icon: Icon(Icons.emoji_objects),
+              onPressed: () async {
+                var resp = await getDataHeaders("${args.url()}/api/stream/motionDetect/on", {
+                  "cookie": sessionId,
+                  "cameraNumber": currCamera.toString()
+                } as Map<String, String>);
+              }),
+          IconButton(
               icon: Icon(Icons.cancel),
               onPressed: () async {
                 var resp = await getDataHeaders("${args.url()}/api/stream/off", {
@@ -124,52 +140,7 @@ class _CCTVState extends State<CCTV> {
                   "cameraNumber": currCamera.toString()
                 } as Map<String, String>);
               }),
-          IconButton(
-              icon: Icon(Icons.not_started_outlined),
-              onPressed: () async {
-                var resp = await getDataHeaders("${args.url()}/api/stream/on", {
-                  "cookie": sessionId,
-                  "cameraNumber": currCamera.toString()
-                } as Map<String, String>);
-              }),
-          IconButton(
-              icon: Icon(Icons.save_alt),
-              onPressed: () async {
-                try { /*
-                  // get the bytes of the current memory image
-                  Uint8List bytes =
-                      ((camImage as Image).image as MemoryImage).bytes;
 
-                  // get the temporary directory be we save this to camera
-                  Directory tempDir = await getTemporaryDirectory();
-
-                  // get the temp path
-                  String tempPath = tempDir.path;
-
-                  // create a temporary file
-                  File f = new File("$tempPath/temp.jpg");
-
-                  // write the bytes sync
-                  f.writeAsBytesSync(bytes);
-
-                  // save the image to the
-                  bool success = await GallerySaver.saveImage(f.path);
-
-                  // report success or failure
-                  if (success) {
-                    Fluttertoast.showToast(msg: "Saved image!");
-                  } else {
-                    Fluttertoast.showToast(msg: "Failed to save image.");
-                  }
-
-                  // then delete the temp file to save memory
-                  await f.delete(); */
-                } catch (e) {
-                  Fluttertoast.showToast(
-                      msg:
-                          "Something went wrong in saving image. Try again in a little.");
-                }
-              })
         ],
       ),
       body: Container(
