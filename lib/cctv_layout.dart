@@ -16,12 +16,17 @@ class CCTV extends StatefulWidget {
   _CCTVState createState() => _CCTVState();
 }
 
-class _CCTVState extends State<CCTV> {
+class _CCTVState extends State<CCTV> with
+    AutomaticKeepAliveClientMixin<CCTV> {
   CCTVArgs args;
   int currCamera = 1;
   IOWebSocketChannel channel;
   DateTime date = DateTime.now();
   final picker = ImagePicker();
+
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -45,8 +50,10 @@ class _CCTVState extends State<CCTV> {
           bottom: PreferredSize(
             preferredSize: AppBar().preferredSize,
             child: TabBar(
+
               isScrollable: true,
               indicatorColor: Colors.white,
+              unselectedLabelColor: Colors.white.withOpacity(0.3),
               tabs: [
                 Tab(
                   child: IconButton(
@@ -136,6 +143,9 @@ class _CCTVState extends State<CCTV> {
                               "cookie": sessionId,
                               "cameraNumber": currCamera.toString()
                             } as Map<String, String>);
+                        setState(() {
+
+                        });
                       }),
                 ),
                 Tab(
@@ -148,7 +158,11 @@ class _CCTVState extends State<CCTV> {
                               "cookie": sessionId,
                               "cameraNumber": currCamera.toString()
                             } as Map<String, String>);
+                        setState(() {
+
+                        });
                       }),
+
                 ),
                 Tab(
                   child: IconButton(
@@ -160,6 +174,9 @@ class _CCTVState extends State<CCTV> {
                               "cookie": sessionId,
                               "cameraNumber": currCamera.toString()
                             } as Map<String, String>);
+                        setState(() {
+
+                        });
                       }),
                 ),
                 Tab(
@@ -172,6 +189,9 @@ class _CCTVState extends State<CCTV> {
                               "cookie": sessionId,
                               "cameraNumber": currCamera.toString()
                             } as Map<String, String>);
+                        setState(() {
+
+                        });
                       }),
                 ),
                 Tab(
@@ -184,12 +204,14 @@ class _CCTVState extends State<CCTV> {
                               "cookie": sessionId,
                               "cameraNumber": currCamera.toString()
                             } as Map<String, String>);
+                        setState(() {
+
+                        });
                       }),
                 )
               ],
             ),
           ),
-          actions: [],
         ),
         body: Container(
             width: MediaQuery.of(context).size.width,
